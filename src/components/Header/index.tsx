@@ -5,6 +5,7 @@ import {
   Text,
   TouchableOpacity
 } from 'react-native';
+import { UserPhoto } from '../UserPhoto';
 
 import { styles } from './styles';
 
@@ -14,9 +15,14 @@ export function Header(){
   return (
     <View style={styles.container}>
         <LogoSvg />
-        <TouchableOpacity>
-          <Text style={styles.logOutText}>Sair</Text>
-        </TouchableOpacity>
+
+        <View style={styles.logOutButton}>
+          <TouchableOpacity>
+            <Text style={styles.logOutText}>Sair</Text>
+          </TouchableOpacity>
+
+          <UserPhoto imageUri="https://github.com/caiohenrique-developer.png" />
+        </View>
     </View>
   );
 }
