@@ -1,9 +1,12 @@
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useEffect, useState } from "react";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as AuthSessions from 'expo-auth-session';
 import { api } from "../services/api";
 
 const CLIENT_ID = 'd8f2c6e7baba9ead8000';
 const SCOPE = 'read:user';
+const USER_STORAGE = '@HeatMob:user';
+const TOKEN_STORAGE = '@HeatMob:token';
 
 type User = {
     id: string;
@@ -14,7 +17,7 @@ type User = {
 
 type AuthContextData = {
     user: User | null;
-    isSignIn: boolean;
+    isSigningIn: boolean;
     sigIn(): Promise<void>;
     sigOut(): Promise<void>;
 }
@@ -31,35 +34,65 @@ type AuthResponse = {
 type AuthorizationResponse = {
     params: {
         code?: string;
-    }
+        error?: string;
+    },
+    type?: string;
 }
 
 export const AuthContext = createContext({} as AuthContextData);
 
 function AuthProvider({children}: AuthProviderProps) {
-    const [isSignIn, setIsSignIn] = useState(false);
+    const [isSigningIn, setIsSigningIn] = useState(true);
     const [user, setUser] = useState<User | null>(null);
     
     async function sigIn() {
-        setIsSignIn(true);
+        try {
+            setIsSigningIn(true);
         
-        const authUrl = `https://github.com/login/oauth/authorize?client_id=${CLIENT_ID}&scope=${SCOPE}`;
-        const { params } = await AuthSessions.startAsync({ authUrl }) as AuthorizationResponse;
-
-        if(params && params.code) {
-            const authResponse = await api.post('/authenticate', { code: params.code });
-            console.log(authResponse.data);
-            
-            const { token, user } = authResponse.data as AuthResponse;
+            const authUrl = `https://github.com/login/oauth/authorize?client_id=${CLIENT_ID}&scope=${SCOPE}`;
+            const authSessionResponse = await AuthSessions.startAsync({ authUrl }) as AuthorizationResponse;
+    
+            if(authSessionResponse.type === 'success' && authSessionResponse.params.error !== 'access_denied') {
+                const authResponse = await api.post('/authenticate', { code: authSessionResponse.params.code });
+                console.log(authResponse.data);
+                
+                const { token, user } = authResponse.data as AuthResponse;
+    
+                api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    
+                await AsyncStorage.setItem(USER_STORAGE, JSON.stringify(user));
+                await AsyncStorage.setItem(TOKEN_STORAGE, JSON.stringify(token));
+    
+                setUser(user);
+            }
+        } catch (err) {
+            console.log(err);
+        } finally {
+            setIsSigningIn(false);
         }
-
-        setIsSignIn(false);
     }
 
     async function sigOut() {}
     
+    useEffect(() => {
+        async function loadingStorageUserData() {
+            const userStorage = await AsyncStorage.getItem(USER_STORAGE);
+            const tokenStorage = await AsyncStorage.getItem(TOKEN_STORAGE);
+
+            if(userStorage && tokenStorage) {
+                api.defaults.headers.common['Authorization'] = `Bearer ${tokenStorage}`;
+
+                setUser(JSON.parse(userStorage));
+            }
+
+            setIsSigningIn(false);
+        }
+
+        loadingStorageUserData();
+    }, []);
+    
     return (
-        <AuthContext.Provider value={{ sigIn, sigOut, user, isSignIn }}>
+        <AuthContext.Provider value={{ sigIn, sigOut, user, isSigningIn }}>
             {children}
         </AuthContext.Provider>
     )
