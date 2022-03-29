@@ -3,6 +3,7 @@
     "name": "heat-mob",
     "slug": "heat-mob",
     "version": "1.0.0",
+    "scheme": "heat-mob",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "splash": {

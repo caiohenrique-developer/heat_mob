@@ -1,4 +1,8 @@
 import React, { createContext, useContext, useState } from "react";
+import * as AuthSessions from 'expo-auth-session';
+
+const CLIENT_ID = 'd8f2c6e7baba9ead8000';
+const SCOPE = 'read:user';
 
 type User = {
     id: string;
@@ -18,13 +22,29 @@ type AuthProviderProps = {
     children: React.ReactNode;
 }
 
+type AuthResponse = {
+    token: string;
+    user: User;
+}
+
+type AuthorizationResponse = {
+    params: {
+        code?: string;
+    }
+}
+
 export const AuthContext = createContext({} as AuthContextData);
 
 function AuthProvider({children}: AuthProviderProps) {
     const [isSignIng, setIsSignIng] = useState(false);
     const [user, setUser] = useState<User | null>(null);
     
-    async function sigIn() {}
+    async function sigIn() {
+        const authUrl = `https://github.com/login/oauth/authorize?client_id=${CLIENT_ID}&scope=${SCOPE}`;
+        const { params } = await AuthSessions.startAsync({ authUrl }) as AuthorizationResponse;
+
+        console.log(params);        
+    }
 
     async function sigOut() {}
     

@@ -10,7 +10,7 @@ import { styles } from './styles';
 export function MessageList(){
   const message = {
     id: '1',
-    text: 'https://github.com/caiohenrique-developer.png is a good image',
+    text: 'Conteúdo da mensagem comentada',
     user: {
       name: 'Caio Henrique',
       avatar_url: 'https://github.com/caiohenrique-developer.png',
@@ -23,11 +23,6 @@ export function MessageList(){
       contentContainerStyle={styles.content}
       keyboardShouldPersistTaps="never"
     >
-        <Message data={message} />
-        <Message data={message} />
-        <Message data={message} />
-        <Message data={message} />
-        <Message data={message} />
         <Message data={message} />
         <Message data={message} />
         <Message data={message} />
